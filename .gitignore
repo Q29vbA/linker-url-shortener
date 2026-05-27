@@ -1,0 +1,14 @@
+# standard python gitignore file for a Flask URL shortener project
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+env/
+.env
