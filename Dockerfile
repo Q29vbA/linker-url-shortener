@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # default BASE_URL, overridden at runtime via helm values
     BASE_URL=http://localhost:8080
 
-# non-root user and group
+# non-root user and group to prevent container escape, and limiting room for actions of compromiser
 RUN groupadd --gid 1001 appgroup && \
     useradd --uid 1001 --gid appgroup --shell /bin/bash --create-home appuser
 

@@ -1,0 +1,81 @@
+# Set these if you wish to override the default chart name / fullname. By default, the release name (which is the Application name when deploying with ArgoCD)
+# is used as the app name, and the fullname is "<release-name>-<chart-name>"
+# nameOverride: ""
+# fullnameOverride: ""
+
+# using one replica since state is in-memory
+replicaCount: 1
+
+image:
+  repository: ghcr.io/q29vba/linker-url-shortener
+  pullPolicy: IfNotPresent
+  # future proposal: CI pipeline or ArgoCD image updater to automate tag updates
+  tag: "v1"
+
+# injected into the container as the BASE_URL environment variable.
+baseUrl: "http://localhost:8080"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  annotations: {}
+    # for production, would typically add annotations here, e.g:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # for certificates management with cert-manager
+    # nginx.ingress.kubernetes.io/proxy-body-size: "1m" # to prevent 413 errors for larger payloads, if using nginx ingress controller
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true" # to enforce HTTPS, if using nginx ingress controller
+  host: linker.local
+  tls: []
+  # To enable TLS, create appropriate secret, uncomment and configure:
+  # - secretName: linker-tls
+  #   hosts:
+  #     - linker.local
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+podSecurityContext: # matching Dockerfile USER 1001
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001 # 
+
+# Container security context applies to the individual app container.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true # since the app doesn't need to write to the filesystem
+  capabilities:
+    drop:
+      - ALL
+
+# since readOnlyRootFilesystem and gunicorn needs a writable /tmp for its worker process files.
+extraVolumes:
+  - name: tmp-dir
+    emptyDir: {}
+extraVolumeMounts:
+  - name: tmp-dir
+    mountPath: /tmp

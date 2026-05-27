@@ -1,0 +1,9 @@
+apiVersion: v2
+name: linker
+description: A Helm chart for the Linker URL shortener service.
+type: application
+
+# Increment appVersion when the application itself changes.
+# Increment version when the chart structure or defaults change.
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "linker.fullname" . }}
+  labels:
+    {{- include "linker.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "linker.selectorLabels" . | nindent 6 }}
+  # RollingUpdate for zero downtime (for when replicas > 1 once app will be stateless/support external state store)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        {{- include "linker.selectorLabels" . | nindent 8 }}
+    spec:
+      # pod wide security context
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Container-level security context locks down the runtime environment.
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: BASE_URL
+              value: {{ .Values.baseUrl | quote }}
+          # Liveness probe: a failed probe causes the kubelet to restart the container.
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          # Readiness probe: a failed probe removes the pod from the Service's
+          # endpoint list, stopping traffic until the app is healthy again.
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          # Resource limits prevent a single pod from starving the node.
+          # Requests are used by the scheduler to place the pod on a suitable node.
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
