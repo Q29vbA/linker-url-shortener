@@ -28,11 +28,11 @@ USER appuser
 EXPOSE 8080
 
 # Run with gunicorn instead of Flask's default server for production-grade process management and stability
-# (e.g, worker prefork prevents container restarts, handling SIGTERMs...).
+# (e.g, worker prefork prevents container restarts (just worker restart), handling SIGTERMs...).
 # - default 30s timeout would be okay for this in-memory app.
 # - access logs to stdout for visibility in container logs
 # - using default one worker since state is in-memory
-# - using default sync worker class since it's a simple app and doesn't require async handling
+# - using default sync worker class since it's a simple app and doesn't require async handling and to prevent race conditions with multiple workers accessing shared in-memory state
 #
 # NOTE ON TIMEOUT & WORKERS:
 # - When running locally WITHOUT a reverse proxy (e.g, bare docker), modern browsers like Chrome 

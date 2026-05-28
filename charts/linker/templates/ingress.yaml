@@ -15,7 +15,11 @@ spec:
     {{- toYaml .Values.ingress.tls | nindent 4 }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host | quote }}
+    {{- /* Extract the domain from baseUrl */}}
+    {{- $domain := .Values.baseUrl | replace "https://" "" | replace "http://" "" | splitList "/" | first | splitList ":" | first }}
+
+    {{- /* Use ingress.host if provided, otherwise use the derived domain */}}
+    - host: {{ default $domain .Values.ingress.host | quote }}
       http:
         paths:
           - path: /

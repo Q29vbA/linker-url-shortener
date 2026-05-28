@@ -12,8 +12,8 @@ image:
   # future proposal: CI pipeline or ArgoCD image updater to automate tag updates
   tag: "v1"
 
-# injected into the container as the BASE_URL environment variable.
-baseUrl: "http://localhost:8080"
+# injected into the container as the BASE_URL environment variable
+baseUrl: "http://default.domain" # override in argocd Application values with the correct URL for your environment
 
 service:
   type: ClusterIP
@@ -25,9 +25,9 @@ ingress:
   annotations: {}
     # for production, would typically add annotations here, e.g:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod" # for certificates management with cert-manager
-    # nginx.ingress.kubernetes.io/proxy-body-size: "1m" # to prevent 413 errors for larger payloads, if using nginx ingress controller
     # nginx.ingress.kubernetes.io/ssl-redirect: "true" # to enforce HTTPS, if using nginx ingress controller
-  host: linker.local
+  # If host is left empty, the helm chart will derive it from the .Values.baseUrl
+  host: ""
   tls: []
   # To enable TLS, create appropriate secret, uncomment and configure:
   # - secretName: linker-tls
@@ -39,9 +39,9 @@ resources:
     cpu: "100m"
     memory: "128Mi"
   limits:
-    cpu: "250m"
-    memory: "256Mi"
+    memory: "128Mi"
 
+# failed liveness probe causes kubelet to restart the container
 livenessProbe:
   httpGet:
     path: /health
@@ -50,6 +50,11 @@ livenessProbe:
   periodSeconds: 15
   failureThreshold: 3
 
+# failed readiness probe removes pod from the service's endpoint list.
+# would ideally configure a spereate endpoint for readiness.
+# since both reach /health, configured to fail before the liveness probe to allow time for
+# the app to recover without a restart, if possible (e.g. if the app is temporarily overloaded)
+# but to still prevent sending traffic to an unresponsive pod.
 readinessProbe:
   httpGet:
     path: /health
@@ -58,13 +63,14 @@ readinessProbe:
   periodSeconds: 10
   failureThreshold: 3
 
+# pod wide security context
 podSecurityContext: # matching Dockerfile USER 1001
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
-  fsGroup: 1001 # 
+  fsGroup: 1001 # Kubelet sets volume ownership to this GID and adds it as a group, allows the app running as non-root to read/write to mounted volumes
 
-# Container security context applies to the individual app container.
+# container specific security context
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true # since the app doesn't need to write to the filesystem

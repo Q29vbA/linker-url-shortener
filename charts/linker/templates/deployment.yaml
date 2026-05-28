@@ -20,14 +20,12 @@ spec:
       labels:
         {{- include "linker.selectorLabels" . | nindent 8 }}
     spec:
-      # pod wide security context
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          # Container-level security context locks down the runtime environment.
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
@@ -35,17 +33,12 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           env:
-            - name: BASE_URL
+            - name: BASE_URL # injecting baseUrl as enviornment variable, configmap would be overkill for this single value
               value: {{ .Values.baseUrl | quote }}
-          # Liveness probe: a failed probe causes the kubelet to restart the container.
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
-          # Readiness probe: a failed probe removes the pod from the Service's
-          # endpoint list, stopping traffic until the app is healthy again.
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
-          # Resource limits prevent a single pod from starving the node.
-          # Requests are used by the scheduler to place the pod on a suitable node.
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.extraVolumeMounts }}

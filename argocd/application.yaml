@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linker
+  namespace: argocd
+  # argo will delete all managed resources when Application is deleted.
+  # Remove to keep workloads running after unregistering.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Q29vbA/linker-url-shortener
+    # tracking main as requested
+    targetRevision: main
+    path: charts/linker
+    helm:
+      # Override baseUrl here to the correct value for your environment
+      values: |
+        baseUrl: "http://linker.local"
+        image:
+          # Using fixed tag for now, auto-update using ArgoCD Image Updater or CI pipeline in the future.
+          tag: "v1"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linker
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      # Validates manifests server-side before applying, catching errors that client-side validation might miss
+      - ServerSideApply=true
