@@ -13,7 +13,7 @@ image:
   tag: "v1"
 
 # injected into the container as the BASE_URL environment variable
-baseUrl: "http://default.domain" # override in argocd Application values with the correct URL for your environment
+baseUrl: "http://linker.local" # override in argocd Application values with the correct URL for your environment
 
 service:
   type: ClusterIP
@@ -23,10 +23,7 @@ service:
 ingress:
   enabled: true
   annotations: {}
-    # for production, would typically add annotations here, e.g:
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # for certificates management with cert-manager
-    # nginx.ingress.kubernetes.io/ssl-redirect: "true" # to enforce HTTPS, if using nginx ingress controller
-  # If host is left empty, the helm chart will derive it from the .Values.baseUrl
+  # If host is left empty, the chart will derive it from the .Values.baseUrl
   host: ""
   tls: []
   # To enable TLS, create appropriate secret, uncomment and configure:
