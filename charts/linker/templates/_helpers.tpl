@@ -43,7 +43,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Selector labels -- used by Service and Deployment to find each other.
+Selector labels used by Service and Deployment for pod selection.
 These must remain stable and should NOT include version or chart revision.
 */}}
 {{- define "linker.selectorLabels" -}}

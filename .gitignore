@@ -12,3 +12,6 @@ venv/
 .venv/
 env/
 .env
+
+# act tool (for running github actions locally)
+.secrets

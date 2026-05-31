@@ -3,10 +3,10 @@ kind: Application
 metadata:
   name: linker
   namespace: argocd
-  # argo will delete all managed resources when Application is deleted.
-  # Remove to keep workloads running after unregistering.
+  # argo will delete all managed resources when Application is deleted by default
+  # remove to keep workloads running after deletion
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io/foreground
 spec:
   project: default
   source:
